@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Co-Buddy AGI - Universal Learning Agent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --accent: #06b6d4;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-dark: #0f172a;
+            --bg-darker: #020617;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --bg-glass: rgba(15, 23, 42, 0.8);
+            --border-light: rgba(148, 163, 184, 0.2);
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-darker) 0%, #1a1f3a 100%);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Glassmorphism Base */
+        .glass {
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+        }
+
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(148, 163, 184, 0.3);
+            background: rgba(30, 41, 59, 0.9);
+            transform: translateY(-2px);
+        }
+
+        /* Skeumorphism Buttons */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary) 0%, #db2777 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 6px 20px rgba(236, 72, 153, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, var(--accent) 0%, #0891b2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-light);
+            padding: 20px 0;
+            margin-bottom: 30px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-tab {
+            padding: 8px 16px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .nav-tab:hover {
+            color: var(--primary-light);
+        }
+
+        /* Main Content */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            glass-card;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(99, 102, 241, 0.2);
+            border-radius: 6px;
+            color: var(--primary);
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input,
+        .form-textarea,
+        .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(15, 23, 42, 0.8);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Tabs Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Plugin Panel */
+        .plugin-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .plugin-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .plugin-item:hover {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .plugin-info {
+            flex: 1;
+        }
+
+        .plugin-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .plugin-url {
+            font-size: 12px;
+            color: var(--text-muted);
+            word-break: break-all;
+        }
+
+        .plugin-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            margin-left: 10px;
+        }
+
+        /* Training Panel */
+        .training-section {
+            margin-bottom: 20px;
+        }
+
+        .training-section-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .training-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .training-method {
+            padding: 12px;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .training-method:hover {
+            background: rgba(6, 182, 212, 0.2);
+            border-color: rgba(6, 182, 212, 0.4);
+        }
+
+        .training-method.active {
+            background: rgba(6, 182, 212, 0.3);
+            border-color: var(--accent);
+        }
+
+        /* Memory Panel */
+        .memory-item {
+            padding: 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 3px solid var(--success);
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .memory-content {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .memory-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .memory-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--primary);
+            border-radius: 4px;
+            font-size: 11px;
+            margin-right: 4px;
+        }
+
+        /* Execution Panel */
+        .execution-status {
+            padding: 15px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--success);
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .status-badge.pending {
+            background: var(--warning);
+        }
+
+        .status-badge.failed {
+            background: var(--danger);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(148, 163, 184, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Interaction Panel */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 400px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+        }
+
+        .message.agent {
+            align-self: flex-start;
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--text-secondary);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .chat-input-area {
+            padding: 12px;
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 8px 12px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            padding: 15px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .training-methods {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">🤖 Co-Buddy AGI</div>
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-tab="plugins">Plugins</button>
+                <button class="nav-tab" data-tab="training">Training</button>
+                <button class="nav-tab" data-tab="execution">Execution</button>
+                <button class="nav-tab" data-tab="interact">Interact</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Plugins Tab -->
+        <div id="plugins" class="tab-content active">
+            <div class="main-grid">
+                <!-- Plugin URLs Panel -->
+                <div class="glass-card">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">🔌</div>
+                            Add Plugin URLs
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Plugin Name</label>
+                        <input type="text" class="form-input" id="pluginName" placeholder="e.g., Aegis Agent">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Plugin URL</label>
+                        <input type="url" class="form-input" id="pluginUrl" placeholder="http://localhost:8000">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Plugin Type</label>
+                        <select class="form-select" id="pluginType">
+                            <option value="agent">Agent</option>
+                            <option value="memory">Memory</option>
+                            <option value="executor">Executor</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="addPlugin()" style="width: 100%;">
+                        ➕ Add Plugin
+                    </button>
+                </div>
+
+                <!-- Connected Plugins Panel -->
+                <div class="glass-card">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">🔗</div>
+                            Connected Plugins
+                        </div>
+                    </div>
+
+                    <div class="plugin-list" id="pluginList">
+                        <div class="plugin-item">
+                            <div class="plugin-info">
+                                <div class="plugin-name">Aegis (Testing Agent)</div>
+                                <div class="plugin-url">http://localhost:8000</div>
+                            </div>
+                            <div class="plugin-status"></div>
+                        </div>
+                        <div class="plugin-item">
+                            <div class="plugin-info">
+                                <div class="plugin-name">Giffy (Memory Agent)</div>
+                                <div class="plugin-url">http://localhost:8001</div>
+                            </div>
+                            <div class="plugin-status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Training Tab -->
+        <div id="training" class="tab-content">
+            <div class="main-grid">
+                <!-- Training Input Panel -->
+                <div class="glass-card">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">📚</div>
+                            Training Data
+                        </div>
+                    </div>
+
+                    <div class="training-section">
+                        <div class="training-section-title">📖 Learning Methods</div>
+                        <div class="training-methods">
+                            <div class="training-method active" onclick="selectTrainingMethod('url')">
+                                🌐 From URL
+                            </div>
+                            <div class="training-method" onclick="selectTrainingMethod('text')">
+                                📝 From Text
+                            </div>
+                            <div class="training-method" onclick="selectTrainingMethod('file')">
+                                📄 From File
+                            </div>
+                            <div class="training-method" onclick="selectTrainingMethod('demo')">
+                                🎬 From Demo
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="urlInput" class="training-section" style="display: block;">
+                        <label class="form-label">Skill Name</label>
+                        <input type="text" class="form-input" id="skillName" placeholder="e.g., Portfolio Rebalancing">
+                        
+                        <label class="form-label" style="margin-top: 12px;">URL to Learn From</label>
+                        <input type="url" class="form-input" id="trainingUrl" placeholder="https://example.com">
+                        
+                        <label class="form-label" style="margin-top: 12px;">Tags</label>
+                        <input type="text" class="form-input" id="trainingTags" placeholder="finance, portfolio, trading">
+                        
+                        <button class="btn btn-primary" onclick="submitTraining('url')" style="width: 100%; margin-top: 12px;">
+                            🚀 Learn from URL
+                        </button>
+                    </div>
+
+                    <div id="textInput" class="training-section" style="display: none;">
+                        <label class="form-label">Skill Name</label>
+                        <input type="text" class="form-input" id="skillNameText" placeholder="e.g., Email Management">
+                        
+                        <label class="form-label" style="margin-top: 12px;">Training Text</label>
+                        <textarea class="form-textarea" id="trainingText" placeholder="Paste your training instructions here..."></textarea>
+                        
+                        <button class="btn btn-primary" onclick="submitTraining('text')" style="width: 100%; margin-top: 12px;">
+                            🚀 Learn from Text
+                        </button>
+                    </div>
+
+                    <div id="fileInput" class="training-section" style="display: none;">
+                        <label class="form-label">Skill Name</label>
+                        <input type="text" class="form-input" id="skillNameFile" placeholder="e.g., Document Processing">
+                        
+                        <label class="form-label" style="margin-top: 12px;">Upload File</label>
+                        <input type="file" class="form-input" id="trainingFile" accept=".pdf,.txt,.doc,.docx">
+                        
+                        <button class="btn btn-primary" onclick="submitTraining('file')" style="width: 100%; margin-top: 12px;">
+                            🚀 Learn from File
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Training Progress Panel -->
+                <div class="glass-card">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">📊</div>
+                            Training Progress
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">5</div>
+                            <div class="stat-label">Skills Learned</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">3</div>
+                            <div class="stat-label">Mastered</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">78%</div>
+                            <div class="stat-label">Avg Confidence</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">12</div>
+                            <div class="stat-label">Sessions</div>
+                        </div>
+                    </div>
+
+                    <div class="training-section">
+                        <div class="training-section-title">🧠 Memory Bank</div>
+                        <div id="memoryList">
+                            <div class="memory-item">
+                                <div class="memory-content">Portfolio rebalancing strategy with quarterly reviews</div>
+                                <div class="memory-meta">
+                                    <span>
+                                        <span class="memory-tag">finance</span>
+                                        <span class="memory-tag">portfolio</span>
+                                    </span>
+                                    <span>2 hours ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Execution Tab -->
+        <div id="execution" class="tab-content">
+            <div class="main-grid">
+                <!-- Execution Control Panel -->
+                <div class="glass-card">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">⚙️</div>
+                            Execute Skill
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Select Skill</label>
+                        <select class="form-select" id="skillSelect">
+                            <option value="">Choose a skill...</option>
+                            <option value="portfolio">Portfolio Rebalancing</option>
+                            <option value="email">Email Management</option>
+                            <option value="research">Market Research</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">User Input</label>
+                        <textarea class="form-textarea" id="executionInput" placeholder="Provide context or parameters for execution..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="watchMode" checked>
+                            <span class="form-label" style="margin: 0;">Watch Mode (User in Loop)</span>
+                        </label>
+                    </div>
+
+                    <button class="btn btn-secondary" onclick="executeSkill()" style="width: 100%;">
+                        ▶️ Execute Autonomously
+                    </button>
+                </div>
+
+                <!-- Execution Status Panel -->
+                <div class="glass-card">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <div class="panel-icon">📈</div>
+                            Execution Status
+                        </div>
+                    </div>
+
+                    <div id="executionStatus" style="display: none;">
+                        <div class="execution-status">
+                            <div class="status-badge" id="statusBadge">In Progress</div>
+                            <div style="margin-top: 10px;">
+                                <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
+                                    Task: <span id="taskName">Portfolio Rebalancing</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progressFill" style="width: 45%;"></div>
+                                </div>
+                                <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+                                    Step 3 of 7 completed
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 15px;">
+                            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 10px;">
+                                Execution Steps
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                <div style="padding: 8px; background: rgba(16, 185, 129, 0.1); border-radius: 4px; margin-bottom: 6px;">
+                                    ✅ Analyzed current portfolio allocation
+                                </div>
+                                <div style="padding: 8px; background: rgba(16, 185, 129, 0.1); border-radius: 4px; margin-bottom: 6px;">
+                                    ✅ Calculated drift from target allocation
+                                </div>
+                                <div style="padding: 8px; background: rgba(245, 158, 11, 0.1); border-radius: 4px;">
+                                    ⏳ Executing rebalancing trades...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="noExecution" style="text-align: center; padding: 30px 0; color: var(--text-muted);">
+                        <div style="font-size: 40px; margin-bottom: 10px;">⏸️</div>
+                        <div>No execution in progress</div>
+                        <div style="font-size: 12px; margin-top: 8px;">Select a skill and click Execute to start</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interaction Tab -->
+        <div id="interact" class="tab-content">
+            <div class="glass-card">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-icon">💬</div>
+                        Real-Time Agent Interaction
+                    </div>
+                </div>
+
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message agent">
+                            Hello! I'm Co-Buddy, your autonomous learning agent. I can learn from your demonstrations and execute tasks on your behalf. How can I help you today?
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="Type your message...">
+                        <button class="btn btn-primary btn-small" onclick="sendMessage()">Send</button>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 12px;">
+                        Quick Actions
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                        <button class="btn btn-outline" onclick="quickAction('teach')">👨‍🏫 Teach Me</button>
+                        <button class="btn btn-outline" onclick="quickAction('execute')">⚡ Execute</button>
+                        <button class="btn btn-outline" onclick="quickAction('learn')">📖 Learn</button>
+                        <button class="btn btn-outline" onclick="quickAction('status')">📊 Status</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab Navigation
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabName = this.dataset.tab;
+                
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                this.classList.add('active');
+                document.getElementById(tabName).classList.add('active');
+            });
+        });
+
+        // Training Methods
+        function selectTrainingMethod(method) {
+            document.querySelectorAll('.training-method').forEach(m => m.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.getElementById('urlInput').style.display = 'none';
+            document.getElementById('textInput').style.display = 'none';
+            document.getElementById('fileInput').style.display = 'none';
+
+            if (method === 'url') document.getElementById('urlInput').style.display = 'block';
+            else if (method === 'text') document.getElementById('textInput').style.display = 'block';
+            else if (method === 'file') document.getElementById('fileInput').style.display = 'block';
+        }
+
+        // Plugin Management
+        function addPlugin() {
+            const name = document.getElementById('pluginName').value;
+            const url = document.getElementById('pluginUrl').value;
+            const type = document.getElementById('pluginType').value;
+
+            if (!name || !url) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const pluginList = document.getElementById('pluginList');
+            const pluginItem = document.createElement('div');
+            pluginItem.className = 'plugin-item slide-in';
+            pluginItem.innerHTML = `
+                <div class="plugin-info">
+                    <div class="plugin-name">${name}</div>
+                    <div class="plugin-url">${url}</div>
+                </div>
+                <div class="plugin-status"></div>
+            `;
+
+            pluginList.appendChild(pluginItem);
+
+            document.getElementById('pluginName').value = '';
+            document.getElementById('pluginUrl').value = '';
+
+            console.log(`Added plugin: ${name} (${type}) at ${url}`);
+        }
+
+        // Training Submission
+        async function submitTraining(type) {
+            let skillName, content, tags = [];
+
+            if (type === 'url') {
+                skillName = document.getElementById('skillName').value;
+                content = document.getElementById('trainingUrl').value;
+                tags = document.getElementById('trainingTags').value.split(',').map(t => t.trim());
+            } else if (type === 'text') {
+                skillName = document.getElementById('skillNameText').value;
+                content = document.getElementById('trainingText').value;
+            } else if (type === 'file') {
+                skillName = document.getElementById('skillNameFile').value;
+                const file = document.getElementById('trainingFile').files[0];
+                if (!file) {
+                    alert('Please select a file');
+                    return;
+                }
+                content = await file.text();
+            }
+
+            if (!skillName || !content) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            console.log(`Training submitted: ${skillName} (${type})`);
+            alert(`✅ Training data submitted for "${skillName}"`);
+
+            // Add to memory display
+            const memoryList = document.getElementById('memoryList');
+            const memoryItem = document.createElement('div');
+            memoryItem.className = 'memory-item slide-in';
+            memoryItem.innerHTML = `
+                <div class="memory-content">${content.substring(0, 100)}...</div>
+                <div class="memory-meta">
+                    <span>
+                        ${tags.map(t => `<span class="memory-tag">${t}</span>`).join('')}
+                    </span>
+                    <span>just now</span>
+                </div>
+            `;
+            memoryList.insertBefore(memoryItem, memoryList.firstChild);
+        }
+
+        // Execution
+        function executeSkill() {
+            const skillId = document.getElementById('skillSelect').value;
+            const input = document.getElementById('executionInput').value;
+            const watchMode = document.getElementById('watchMode').checked;
+
+            if (!skillId) {
+                alert('Please select a skill');
+                return;
+            }
+
+            document.getElementById('noExecution').style.display = 'none';
+            document.getElementById('executionStatus').style.display = 'block';
+
+            console.log(`Executing skill: ${skillId}, Watch mode: ${watchMode}`);
+
+            // Simulate progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 20;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    document.getElementById('statusBadge').textContent = 'Completed';
+                    document.getElementById('statusBadge').className = 'status-badge';
+                }
+                document.getElementById('progressFill').style.width = progress + '%';
+            }, 1000);
+        }
+
+        // Chat
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            const chatMessages = document.getElementById('chatMessages');
+            
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user';
+            userMsg.textContent = message;
+            chatMessages.appendChild(userMsg);
+
+            input.value = '';
+
+            setTimeout(() => {
+                const agentMsg = document.createElement('div');
+                agentMsg.className = 'message agent';
+                agentMsg.textContent = 'I understand. I\'m processing your request...';
+                chatMessages.appendChild(agentMsg);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 500);
+
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function quickAction(action) {
+            const actions = {
+                'teach': 'I\'m ready to learn from you. Please demonstrate the task you want me to automate.',
+                'execute': 'Which skill would you like me to execute?',
+                'learn': 'I can learn from URLs, files, or text. What would you like to teach me?',
+                'status': 'I have learned 5 skills and successfully completed 12 tasks with 78% average confidence.'
+            };
+
+            const chatMessages = document.getElementById('chatMessages');
+            const agentMsg = document.createElement('div');
+            agentMsg.className = 'message agent';
+            agentMsg.textContent = actions[action];
+            chatMessages.appendChild(agentMsg);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Initialize
+        console.log('Co-Buddy AGI Interface loaded');
+    </script>
+</body>
+</html>
