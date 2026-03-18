@@ -545,7 +545,30 @@ class AutonomousExecutor:
 # FASTAPI APPLICATION
 # ============================================================================
 
-app = FastAPI(title="Co-Buddy AGI System", version="1.0.0")
+from agi_core import get_agi_core, AGICore
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Initialize AGI Core
+api_keys = {
+    'groq': os.getenv('GROQ_API_KEY'),
+    'gemini': os.getenv('GEMINI_API_KEY'),
+    'openrouter': os.getenv('OPENROUTER_API_KEY'),
+    'nvidia': os.getenv('NVIDIA_API_KEY'),
+    'huggingface': os.getenv('HUGGINGFACE_API_KEY'),
+    'deepseek': os.getenv('DEEPSEEK_API_KEY')
+}
+
+agi_core = get_agi_core(api_keys)
+
+app = FastAPI(
+    title="Co-Buddy AGI - Advanced General Intelligence",
+    description="Multi-agent system with AGI capabilities",
+    version="2.0.0-AGI"
+)
 
 # CORS middleware
 app.add_middleware(
@@ -773,6 +796,62 @@ async def websocket_interact(websocket: WebSocket):
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
         await websocket.close(code=1000)
+
+# ============================================================================
+# AGI ENDPOINTS
+# ============================================================================
+
+@app.post("/agi/process")
+async def agi_process_task(request: dict):
+    """Process task with AGI capabilities"""
+    try:
+        task = request.get('task', '')
+        context = request.get('context', {})
+        
+        if not task:
+            raise HTTPException(status_code=400, detail="Task is required")
+        
+        # Process with AGI core
+        result = await agi_core.process_task(task, context)
+        
+        return {
+            "success": True,
+            "result": result
+        }
+    except Exception as e:
+        logger.error(f"AGI processing error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/agi/status")
+async def agi_status():
+    """Get AGI system status"""
+    try:
+        status = agi_core.get_status()
+        return status
+    except Exception as e:
+        logger.error(f"AGI status error: {e}")
+        return {
+            "working_memory_size": 0,
+            "available_skills": 5,
+            "tasks_processed": 0,
+            "cognitive_load": 0.5,
+            "average_confidence": 0.8,
+            "uptime": 0,
+            "error": str(e)
+        }
+
+@app.get("/agi/skills")
+async def agi_list_skills():
+    """List available AGI skills"""
+    try:
+        skills = agi_core.skill_manager.get_available_skills()
+        return {
+            "success": True,
+            "skills": [asdict(skill) for skill in skills]
+        }
+    except Exception as e:
+        logger.error(f"AGI skills error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
 # STARTUP AND SHUTDOWN

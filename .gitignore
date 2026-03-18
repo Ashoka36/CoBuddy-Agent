@@ -50,9 +50,9 @@ logs/
 .mypy_cache/
 
 # Environment
-.env
-.env.local
-.env.*.local
+# .env
+# .env.local
+# .env.*.local
 
 # Node modules
 node_modules/
