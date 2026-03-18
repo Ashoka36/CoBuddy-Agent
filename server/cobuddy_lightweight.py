@@ -163,13 +163,27 @@ class LightweightEmbeddings:
         self._load_model()
     
     def _load_model(self):
-        """Load Model2Vec model"""
+        """Load Model2Vec model with Hugging Face authentication"""
         try:
+            # Set Hugging Face token from environment
+            hf_token = os.getenv('HUGGINGFACE_API_KEY')
+            if hf_token and hf_token != 'your_huggingface_api_key_here':
+                from huggingface_hub import login
+                login(token=hf_token)
+                logger.info("Hugging Face authentication successful")
+            
             self.model = StaticModel.from_pretrained(config.embedding_model)
             logger.info(f"Loaded embedding model: {config.embedding_model}")
         except Exception as e:
             logger.error(f"Failed to load embedding model: {e}")
-            raise
+            # Fallback to a simpler model if main model fails
+            try:
+                logger.info("Attempting to load fallback model...")
+                self.model = StaticModel.from_pretrained("minishlab/M2V_base_output")
+                logger.info("Loaded fallback embedding model")
+            except Exception as fallback_error:
+                logger.error(f"Fallback model also failed: {fallback_error}")
+                raise
     
     def encode(self, texts: List[str]) -> np.ndarray:
         """Encode texts to embeddings"""
@@ -306,6 +320,19 @@ class CobuddyMemory:
             logger.info("Database initialized")
         except Exception as e:
             logger.error(f"Database init error: {e}")
+    
+    def get_skill_count(self) -> int:
+        """Get total number of skills in memory"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM skills")
+            count = cursor.fetchone()[0]
+            conn.close()
+            return count
+        except Exception as e:
+            logger.error(f"Error getting skill count: {e}")
+            return 0
     
     def add_skill(self, skill: Skill) -> bool:
         """Add skill to memory"""
@@ -859,11 +886,41 @@ async def agi_list_skills():
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize on startup"""
-    logger.info("Co-Buddy AGI System starting...")
-    logger.info(f"Embedding model: {config.embedding_model}")
-    logger.info(f"Embedding dimension: {config.embedding_dim}")
-    logger.info(f"Memory DB: {config.db_path}")
+    """Initialize on startup - optimized for Render"""
+    try:
+        logger.info("Co-Buddy AGI System starting...")
+        
+        # Initialize components with error handling
+        try:
+            logger.info(f"Embedding model: {config.embedding_model}")
+            logger.info(f"Embedding dimension: {config.embedding_dim}")
+        except Exception as e:
+            logger.warning(f"Could not log embedding info: {e}")
+        
+        try:
+            logger.info(f"Memory DB: {config.db_path}")
+        except Exception as e:
+            logger.warning(f"Could not log DB path: {e}")
+        
+        # Test basic functionality
+        try:
+            import time
+            start_time = time.time()
+            
+            # Simple test to ensure system is responsive
+            test_result = memory.get_skill_count() if hasattr(memory, 'get_skill_count') else 0
+            
+            startup_time = time.time() - start_time
+            logger.info(f"System initialized in {startup_time:.2f}s")
+            
+        except Exception as e:
+            logger.warning(f"Startup test failed: {e}")
+        
+        logger.info("Co-Buddy AGI System ready!")
+        
+    except Exception as e:
+        logger.error(f"Startup error: {e}")
+        # Don't fail startup, just log error
 
 @app.on_event("shutdown")
 async def shutdown_event():

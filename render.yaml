@@ -1,0 +1,55 @@
+services:
+  # Co-Buddy AGI Main Service
+  - type: web
+    name: cobuddy-agi
+    runtime: python
+    plan: free
+    buildCommand: |
+      chmod +x start.sh
+      ./start.sh
+    startCommand: |
+      source venv/bin/activate 2>/dev/null || true
+      python server/cobuddy_lightweight.py --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: PYTHON_VERSION
+        value: 3.12
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: HUGGINGFACE_API_KEY
+        sync: false
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: CORS_ORIGINS
+        value: "*"
+    healthCheck:
+      path: /health
+      initialDelaySeconds: 120  # Increased for Model2Vec download
+      periodSeconds: 30
+      timeoutSeconds: 10
+      failureThreshold: 3
+      successThreshold: 1
+
+# Render-specific optimizations
+build:
+  - pip install --upgrade pip setuptools wheel
+  - pip install -r requirements.txt
+
+# Auto-deploy configuration
+autoDeploy: true
+
+# Scaling configuration (for paid plans)
+# scaling:
+#   minInstances: 1
+#   maxInstances: 3
+#   targetMemoryPercent: 70
+#   targetCPUPercent: 70
